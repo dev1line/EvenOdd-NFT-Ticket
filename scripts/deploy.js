@@ -6,7 +6,7 @@ async function main() {
   const [deployer] = await ethers.getSigners();
 
   console.log('=====================================================================================');
-  console.log(`DEPLOYED CONTRACT TOKEN TO:  ${hre.network.name}`);
+  console.log(`DEPLOYED CONTRACT TO:  ${hre.network.name}`);
 
   const Token = await ethers.getContractFactory("HandleToken");
   const name_CASH = "CASHCOIN";
@@ -16,7 +16,7 @@ async function main() {
   const cash = token.createToken(name_CASH, symbol_CASH);
 
   console.log('=====================================================================================');
-  console.log(`DEPLOYED CONTRACT TOKEN SUCCESSFULLY AT:  ${ticket.address}`);
+  console.log(`DEPLOYED CONTRACT TOKEN SUCCESSFULLY AT:  ${cash.address}`);
 
   const Ticket = await ethers.getContractFactory("ERC721Full");
   const name = "Mastercard VIP";
