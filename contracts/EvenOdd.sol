@@ -4,16 +4,11 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-
-interface IMasterCash {
-    function tokenOfOwnerByIndex(address owner, uint256 index) external view returns (uint256);
-    function getDueDate(uint tokenId) external view returns (uint256);
-    function balanceOf(address owner) external view returns (uint);
-}
+import "./IMasterCard.sol";
 
 contract EvenOdd is Ownable, ReentrancyGuard {
     address private _CASH;
-    address private _ticket;//address(0x5f`3527B3d4B0eF893cB8423417392ee2Cab6998C)
+    IMasterCash private _ticket;
 
     struct PlayerMetadata {
         uint256 betAmount;
@@ -34,11 +29,13 @@ contract EvenOdd is Ownable, ReentrancyGuard {
 
     constructor(address _dealer, address _ticketAddress, address _tokenCASH) {
         transferOwnership(_dealer);
-        _ticket = _ticketAddress;
+        _ticket = IMasterCash(_ticketAddress);
         _CASH = _tokenCASH;
     }
 
-    function transfer() external payable onlyOwner {}
+    function transfer(uint256 amount) external onlyOwner {
+          require(IERC20(_CASH).transferFrom(msg.sender, address(this), amount), "transferFrom failed !");
+    }
 
     function withdraw(uint256 _amount) external onlyOwner {
         require(_amount > 0, "Amount must be not zero");
@@ -48,31 +45,31 @@ contract EvenOdd is Ownable, ReentrancyGuard {
         emit Withdraw(_amount);
     }
 
-    function bet(bool _isEven) external payable nonReentrant {
-        require(IMasterCash(_ticket).balanceOf(msg.sender) > 0, "You need to buy a ticket to play this game");
-        uint tokenId = IMasterCash(_ticket).tokenOfOwnerByIndex(msg.sender, 0);
-        require(block.timestamp < IMasterCash(_ticket).getDueDate(tokenId), "Your ticket is expired");
+    function bet(bool _isEven,uint256 amount) external nonReentrant {
+        require(_ticket.balanceOf(msg.sender) > 0, "You need to buy a ticket to play this game");
+        uint tokenId = _ticket.tokenOfOwnerByIndex(msg.sender, 0);
+        require(block.timestamp < _ticket.getDueDate(tokenId), "Your ticket is expired");
         require(!isAlreadyBet(_msgSender()), "Already bet");
         require(
-            msg.value > 0,
+            amount > 0,
             "minimum amount needed to play the game"
         );
         require(
-            (totalBetAmountPerRoll + msg.value) * 2 <= getDealerBalance(),
+            (totalBetAmountPerRoll + amount) * 2 <= getDealerBalance(),
             "total bet amount exceeds dealer balance"
         );
 
         players[_msgSender()] = PlayerMetadata(
-            msg.value,
+           amount,
             _msgSender(),
             _isEven
         );
-        require(IERC20(_CASH).transferFrom(msg.sender, address(this), msg.value), "transferFrom failed !");
+        require(IERC20(_CASH).transferFrom(msg.sender, address(this), amount), "transferFrom failed !");
         playersArray.push(_msgSender());
-        totalBetAmount += msg.value;
-        totalBetAmountPerRoll += msg.value;
+        totalBetAmount += amount;
+        totalBetAmountPerRoll += amount;
 
-        emit Bet(rollId, _msgSender(), msg.value, _isEven);
+        emit Bet(rollId, _msgSender(), amount, _isEven);
     }
 
     function rollDice() external onlyOwner {

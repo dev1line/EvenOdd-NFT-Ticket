@@ -1,43 +1,16 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.0;
-pragma experimental ABIEncoderV2;
-import "@openzeppelin/contracts/token/ERC20/presets/ERC20PresetMinterPauser.sol";
+pragma solidity ^0.8.0;
 
-contract myToken is ERC20PresetMinterPauser {
-    constructor(string memory name, string memory symbol)
-        public
-        ERC20PresetMinterPauser(name, symbol)
-    {}
-}
+import "@openzeppelin/contracts/utils/Context.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+contract TokenCash is ERC20, Ownable {
 
-contract HandleToken {
-    myToken public tokenInstance;
-    mapping(address => myToken) public listTokens;
-    mapping(address => address) public owners;
-
-    function createToken(string memory name, string memory symbol) public returns (myToken tokenInstance) {
-        tokenInstance = new myToken(name, symbol);
-        listTokens[address(tokenInstance)] = tokenInstance;
-        owners[address(tokenInstance)] = msg.sender;
+    constructor (string memory name_, string memory symbol_) ERC20(name_, symbol_) {
+        _mint(_msgSender(), 1999 ether);
     }
 
-    function mint(
-        address token,
-        address to,
-        uint256 amount
-    ) public {
-        require(
-            msg.sender == owners[token],
-            "Ownable: You are not the owner, Bye."
-        );
-        listTokens[token].mint(to, amount);
-    }
-
-    function getToken() public view returns (address) {
-        return address(tokenInstance);
-    }
-
-    function getOwner(address token) public view returns (address) {
-        return (address(owners[token]));
+    function mint(address receiver, uint256 amount) public onlyOwner {
+        _mint(receiver, amount);
     }
 }

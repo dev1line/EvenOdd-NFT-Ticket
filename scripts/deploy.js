@@ -13,10 +13,10 @@ async function main() {
   const symbol_CASH = "CASH";
   const token = await Token.deploy();
   await token.deployed();
-  const cash = token.createToken(name_CASH, symbol_CASH);
-
+  const cash = await token.createToken(name_CASH, symbol_CASH);
+  const cash_address = await token.getToken();
   console.log('=====================================================================================');
-  console.log(`DEPLOYED CONTRACT TOKEN SUCCESSFULLY AT:  ${cash.address}`);
+  console.log(`DEPLOYED CONTRACT TOKEN SUCCESSFULLY AT:  ${cash_address}`);
 
   const Ticket = await ethers.getContractFactory("ERC721Full");
   const name = "Mastercard VIP";
@@ -42,7 +42,7 @@ async function main() {
 
   // export deployed contracts to json (using for front-end)
   const contractAddresses = {
-    "Cash": cash.address,
+    "Cash": cash_address,
     "Ticket": ticket.address,
     "EvenOdd": evenOdd.address
   }
