@@ -32,7 +32,7 @@ async function main() {
 
   const EvenOdd = await ethers.getContractFactory("EvenOdd");
 
-  const evenOdd = await EvenOdd.deploy(deployer.address, ticket.address);
+  const evenOdd = await EvenOdd.deploy(deployer.address, ticket.address, cash.address);
   await evenOdd.deployed();
 
   console.log('=====================================================================================');
