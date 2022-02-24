@@ -5,10 +5,10 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./IMasterCard.sol";
-
+import "./ITokenCash.sol";
 contract EvenOdd is Ownable, ReentrancyGuard {
-    address private _CASH;
-    IMasterCash private _ticket;
+    ITokenCash public immutable _cash;
+    IMasterCash public immutable _ticket;
 
     struct PlayerMetadata {
         uint256 betAmount;
@@ -30,11 +30,11 @@ contract EvenOdd is Ownable, ReentrancyGuard {
     constructor(address _dealer, address _ticketAddress, address _tokenCASH) {
         transferOwnership(_dealer);
         _ticket = IMasterCash(_ticketAddress);
-        _CASH = _tokenCASH;
+        _cash = ITokenCash(_tokenCASH);
     }
 
     function transfer(uint256 amount) external onlyOwner {
-          require(IERC20(_CASH).transferFrom(msg.sender, address(this), amount), "transferFrom failed !");
+          require(_cash.transferFrom(msg.sender, address(this), amount), "transferFrom failed !");
     }
 
     function withdraw(uint256 _amount) external onlyOwner {
@@ -45,7 +45,7 @@ contract EvenOdd is Ownable, ReentrancyGuard {
         emit Withdraw(_amount);
     }
 
-    function bet(bool _isEven,uint256 amount) external nonReentrant {
+    function bet(bool _isEven, uint256 amount) external nonReentrant {
         require(_ticket.balanceOf(msg.sender) > 0, "You need to buy a ticket to play this game");
         uint tokenId = _ticket.tokenOfOwnerByIndex(msg.sender, 0);
         require(block.timestamp < _ticket.getDueDate(tokenId), "Your ticket is expired");
@@ -64,7 +64,7 @@ contract EvenOdd is Ownable, ReentrancyGuard {
             _msgSender(),
             _isEven
         );
-        require(IERC20(_CASH).transferFrom(msg.sender, address(this), amount), "transferFrom failed !");
+        require(_cash.transferFrom(msg.sender, address(this), amount), "transferFrom failed !");
         playersArray.push(_msgSender());
         totalBetAmount += amount;
         totalBetAmountPerRoll += amount;
@@ -95,7 +95,7 @@ contract EvenOdd is Ownable, ReentrancyGuard {
     }
 
     function getDealerBalance() public view returns (uint256) {
-        return IERC20(_CASH).balanceOf(address(this));
+        return _cash.balanceOf(address(this));
     }
 
     function getBetAmountOf(address _account) public view returns (uint256) {
@@ -116,7 +116,7 @@ contract EvenOdd is Ownable, ReentrancyGuard {
 
     function transferMoney(address _account, uint256 _betAmount) private {
         // payable(players[_account].player).transfer(_betAmount);
-        IERC20(_CASH).transfer(players[_account].player, _betAmount);
+        _cash.transfer(players[_account].player, _betAmount);
     }
 
     function resetBoard() private {
