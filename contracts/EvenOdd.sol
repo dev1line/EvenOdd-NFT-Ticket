@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 interface IMasterCash {
     function tokenOfOwnerByIndex(address owner, uint256 index) external view returns (uint256);
@@ -11,8 +12,8 @@ interface IMasterCash {
 }
 
 contract EvenOdd is Ownable, ReentrancyGuard {
-    
-    address private _ticket;//address(0x5f3527B3d4B0eF893cB8423417392ee2Cab6998C)
+    address private _CASH;
+    address private _ticket;//address(0x5f`3527B3d4B0eF893cB8423417392ee2Cab6998C)
 
     struct PlayerMetadata {
         uint256 betAmount;
@@ -31,9 +32,10 @@ contract EvenOdd is Ownable, ReentrancyGuard {
     event Bet(uint256 rollId, address player, uint256 amount, bool isEven);
     event DiceRolled(uint256 rollId, uint8 diceNumber_1, uint8 diceNumber_2, bool isEven);
 
-    constructor(address _dealer, address _ticketAddress) {
+    constructor(address _dealer, address _ticketAddress, address _tokenCASH) {
         transferOwnership(_dealer);
         _ticket = _ticketAddress;
+        _CASH = _tokenCASH;
     }
 
     function transfer() external payable onlyOwner {}
@@ -65,7 +67,7 @@ contract EvenOdd is Ownable, ReentrancyGuard {
             _msgSender(),
             _isEven
         );
-
+        require(IERC20(_CASH).transferFrom(msg.sender, address(this), msg.value), "transferFrom failed !");
         playersArray.push(_msgSender());
         totalBetAmount += msg.value;
         totalBetAmountPerRoll += msg.value;
@@ -96,7 +98,7 @@ contract EvenOdd is Ownable, ReentrancyGuard {
     }
 
     function getDealerBalance() public view returns (uint256) {
-        return address(this).balance;
+        return IERC20(_CASH).balanceOf(address(this));
     }
 
     function getBetAmountOf(address _account) public view returns (uint256) {
@@ -116,7 +118,8 @@ contract EvenOdd is Ownable, ReentrancyGuard {
     }
 
     function transferMoney(address _account, uint256 _betAmount) private {
-        payable(players[_account].player).transfer(_betAmount);
+        // payable(players[_account].player).transfer(_betAmount);
+        IERC20(_CASH).transfer(players[_account].player, _betAmount);
     }
 
     function resetBoard() private {

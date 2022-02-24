@@ -28,7 +28,7 @@ const config = {
     },
     rinkeby: {
       url: `https://rinkeby.infura.io/v3/${process.env.INFURA_API_KEY}`,
-      accounts: [process.env.DEPLOY_ACCOUNT],
+      accounts: [process.env.DEPLOY_ACCOUNT1, process.env.DEPLOY_ACCOUNT2, process.env.DEPLOY_ACCOUNT3],
     }
   },
   etherscan: {

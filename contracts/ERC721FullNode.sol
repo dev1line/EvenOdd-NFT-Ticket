@@ -505,25 +505,25 @@ contract ERC721 is ERC165, IERC721 {
      * @param owner owner of the token to burn
      * @param tokenId uint256 ID of the token being burned
      */
-    // function _burn(address owner, uint256 tokenId) internal virtual {
-    //     require(ownerOf(tokenId) == owner, "ERC721: burn of token that is not own");
+    function _burn(address owner, uint256 tokenId) internal virtual {
+        require(ownerOf(tokenId) == owner, "ERC721: burn of token that is not own");
 
-    //     _clearApproval(tokenId);
+        _clearApproval(tokenId);
 
-    //     _ownedTokensCount[owner].decrement();
-    //     _tokenOwner[tokenId] = address(0);
+        _ownedTokensCount[owner].decrement();
+        _tokenOwner[tokenId] = address(0);
 
-    //     emit Transfer(owner, address(0), tokenId);
-    // }
+        emit Transfer(owner, address(0), tokenId);
+    }
 
     /**
      * @dev Internal function to burn a specific token.
      * Reverts if the token does not exist.
      * @param tokenId uint256 ID of the token being burned
      */
-    // function _burn(uint256 tokenId) internal virtual{
-    //     _burn(ownerOf(tokenId), tokenId);
-    // }
+    function _burn(uint256 tokenId) internal virtual{
+        _burn(ownerOf(tokenId), tokenId);
+    }
 
     /**
      * @dev Internal function to transfer ownership of a given token ID to another address.
@@ -663,13 +663,13 @@ contract ERC721Enumerable is ERC165, ERC721, IERC721Enumerable {
      * @param to address to receive the ownership of the given token ID
      * @param tokenId uint256 ID of the token to be transferred
      */
-    // function _transferFrom(address from, address to, uint256 tokenId) internal override virtual{
-    //     super._transferFrom(from, to, tokenId);
+    function _transferFromEnumerable(address from, address to, uint256 tokenId) internal virtual{
+        super._transferFrom(from, to, tokenId);
 
-    //     _removeTokenFromOwnerEnumeration(from, tokenId);
+        _removeTokenFromOwnerEnumeration(from, tokenId);
 
-    //     _addTokenToOwnerEnumeration(to, tokenId);
-    // }
+        _addTokenToOwnerEnumeration(to, tokenId);
+    }
 
     /**
      * @dev Internal function to mint a new token.
@@ -677,13 +677,13 @@ contract ERC721Enumerable is ERC165, ERC721, IERC721Enumerable {
      * @param to address the beneficiary that will own the minted token
      * @param tokenId uint256 ID of the token to be minted
      */
-    // function _mint(address to, uint256 tokenId) internal override  {
-    //     super._mint(to, tokenId);
+    function _mintEnumerable(address to, uint256 tokenId) internal {
+        super._mint(to, tokenId);
 
-    //     _addTokenToOwnerEnumeration(to, tokenId);
+        _addTokenToOwnerEnumeration(to, tokenId);
 
-    //     _addTokenToAllTokensEnumeration(tokenId);
-    // }
+        _addTokenToAllTokensEnumeration(tokenId);
+    }
 
     /**
      * @dev Internal function to burn a specific token.
@@ -692,15 +692,15 @@ contract ERC721Enumerable is ERC165, ERC721, IERC721Enumerable {
      * @param owner owner of the token to burn
      * @param tokenId uint256 ID of the token being burned
      */
-    // function _burn(address owner, uint256 tokenId) internal override {
-    //     super._burn(owner, tokenId);
+    function _burnEnumerable(address owner, uint256 tokenId) internal {
+        super._burn(owner, tokenId);
 
-    //     _removeTokenFromOwnerEnumeration(owner, tokenId);
-    //     // Since tokenId will be deleted, we can clear its slot in _ownedTokensIndex to trigger a gas refund
-    //     _ownedTokensIndex[tokenId] = 0;
+        _removeTokenFromOwnerEnumeration(owner, tokenId);
+        // Since tokenId will be deleted, we can clear its slot in _ownedTokensIndex to trigger a gas refund
+        _ownedTokensIndex[tokenId] = 0;
 
-    //     _removeTokenFromAllTokensEnumeration(tokenId);
-    // }
+        _removeTokenFromAllTokensEnumeration(tokenId);
+    }
 
     /**
      * @dev Gets the list of token IDs of the requested owner.
@@ -872,14 +872,14 @@ contract ERC721Metadata is ERC165, ERC721, IERC721Metadata {
      * @param owner owner of the token to burn
      * @param tokenId uint256 ID of the token being burned by the msg.sender
      */
-    // function _burn(address owner, uint256 tokenId) internal override {
-    //     super._burn(owner, tokenId);
+    function _burnMetadata(address owner, uint256 tokenId) internal {
+        super._burn(owner, tokenId);
 
-    //     // Clear metadata (if any)
-    //     if (bytes(_tokenURIs[tokenId]).length != 0) {
-    //         delete _tokenURIs[tokenId];
-    //     }
-    // }
+        // Clear metadata (if any)
+        if (bytes(_tokenURIs[tokenId]).length != 0) {
+            delete _tokenURIs[tokenId];
+        }
+    }
 }
 
 // File: @openzeppelin/contracts/token/ERC721/ERC721Full.sol
@@ -895,8 +895,8 @@ contract ERC721Full is ERC721Enumerable, ERC721Metadata {
     constructor (string memory name, string memory symbol) ERC721Metadata(name, symbol) {
         // solhint-disable-previous-line no-empty-blocks 
     }
-      function mint(address _to, uint256 _tokenId, string memory _uri) public {
-        super._mint(_to, _tokenId);
+      function mintNFT(address _to, uint256 _tokenId, string memory _uri) public {
+        super._mintEnumerable(_to, _tokenId);
         super._setTokenURI(_tokenId, _uri);
         initialDate[_tokenId] = block.timestamp;
         dueDate[_tokenId] = initialDate[_tokenId] + 2629743; // 30 days
