@@ -8,17 +8,17 @@ async function main() {
   console.log('=====================================================================================');
   console.log(`DEPLOYED CONTRACT TO:  ${hre.network.name}`);
 
-  const Token = await ethers.getContractFactory("HandleToken");
+  const Token = await ethers.getContractFactory("TokenCash");
   const name_CASH = "CASHCOIN";
   const symbol_CASH = "CASH";
-  const token = await Token.deploy();
-  await token.deployed();
-  const cash = await token.createToken(name_CASH, symbol_CASH);
-  const cash_address = await token.getToken();
-  console.log('=====================================================================================');
-  console.log(`DEPLOYED CONTRACT TOKEN SUCCESSFULLY AT:  ${cash_address}`);
+  const cash = await Token.deploy(name_CASH, symbol_CASH);
+  await cash.deployed();
 
-  const Ticket = await ethers.getContractFactory("ERC721Full");
+
+  console.log('=====================================================================================');
+  console.log(`DEPLOYED CONTRACT CASH SUCCESSFULLY AT:  ${cash.address}`);
+
+  const Ticket = await ethers.getContractFactory("MasterCard");
   const name = "Mastercard VIP";
   const symbol = "MTCASH";
   const ticket = await Ticket.deploy(name, symbol);
@@ -42,7 +42,7 @@ async function main() {
 
   // export deployed contracts to json (using for front-end)
   const contractAddresses = {
-    "Cash": cash_address,
+    "Cash": cash.address,
     "Ticket": ticket.address,
     "EvenOdd": evenOdd.address
   }

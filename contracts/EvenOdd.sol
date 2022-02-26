@@ -6,9 +6,10 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./IMasterCard.sol";
 import "./ITokenCash.sol";
+
 contract EvenOdd is Ownable, ReentrancyGuard {
     ITokenCash public immutable _cash;
-    IMasterCash public immutable _ticket;
+    IMasterCard public immutable _ticket;
 
     struct PlayerMetadata {
         uint256 betAmount;
@@ -29,7 +30,7 @@ contract EvenOdd is Ownable, ReentrancyGuard {
 
     constructor(address _dealer, address _ticketAddress, address _tokenCASH) {
         transferOwnership(_dealer);
-        _ticket = IMasterCash(_ticketAddress);
+        _ticket = IMasterCard(_ticketAddress);
         _cash = ITokenCash(_tokenCASH);
     }
 
@@ -41,7 +42,6 @@ contract EvenOdd is Ownable, ReentrancyGuard {
         require(_amount > 0, "Amount must be not zero");
         require(_amount <= getDealerBalance(), "Amount exceeds balance");
         transferMoney(_msgSender(), _amount);
-
         emit Withdraw(_amount);
     }
 
@@ -115,8 +115,10 @@ contract EvenOdd is Ownable, ReentrancyGuard {
     }
 
     function transferMoney(address _account, uint256 _betAmount) private {
-        // payable(players[_account].player).transfer(_betAmount);
-        _cash.transfer(players[_account].player, _betAmount);
+        if (_account == _msgSender()) {
+            _cash.transfer(_msgSender(), _betAmount);
+        } else
+            _cash.transfer(players[_account].player, _betAmount);
     }
 
     function resetBoard() private {

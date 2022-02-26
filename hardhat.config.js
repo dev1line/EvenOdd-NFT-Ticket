@@ -21,7 +21,7 @@ const config = {
   defaultNetwork: 'hardhat',
   networks: {
     hardhat: {
-      accounts: { count: 20 },
+      accounts: { count: 300 },
     },
     localhost: {
       chainId: 31337
