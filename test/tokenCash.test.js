@@ -1,11 +1,10 @@
+const chai = require("chai");
 const { expect } = require("chai");
+const { solidity } = require("ethereum-waffle");
 
+chai.use(solidity);
 describe("Testcase of Token CASH: ", () => {
     let Token, token, owner, addr1, addr2;
-    // Static mint is 1999 Ether
-    //   constructor (string memory name_, string memory symbol_) ERC20(name_, symbol_) {
-    //     _mint(_msgSender(), 1999 ether);
-    // }
     const STATIC_ETHERS_1 = '1000000000000000000';
     const STATIC_ETHERS_2 = '2000000000000000000000';
     beforeEach(async () => {
@@ -34,12 +33,7 @@ describe("Testcase of Token CASH: ", () => {
             expect(addr1Balance).to.equal(STATIC_ETHERS_1);
         });
         it("should return fail with NOT be minted by only owner",async () => {
-          try {
-            const tx = await token.connect(addr1).mint(addr2.address, STATIC_ETHERS_1);
-            await tx.wait();
-          } catch(e) {} 
-            const addr2Balance = await token.balanceOf(addr2.address);
-            expect(addr2Balance).to.equal(0);
+            await expect(token.connect(addr1).mint(addr2.address, STATIC_ETHERS_1)).to.be.revertedWith("Ownable: caller is not the owner");
         });
         it("should update total supply when mint success", async () => {
           await token.connect(owner).mint(addr1.address, STATIC_ETHERS_1);

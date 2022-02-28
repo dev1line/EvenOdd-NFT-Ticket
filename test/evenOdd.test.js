@@ -1,5 +1,8 @@
+const chai = require("chai");
 const { expect } = require("chai");
+const { solidity } = require("ethereum-waffle");
 
+chai.use(solidity);
 describe("Testcase of EvenOdd: ", () => {
     const ONE_ETHER  ='1000000000000000000';
     const TWO_ETHERS  ='2000000000000000000';
@@ -7,7 +10,6 @@ describe("Testcase of EvenOdd: ", () => {
     const FOUR_ETHERS  ='4000000000000000000';
     const MORE_ETHERS  ='1999000000000000000000';
     let Token, token, Ticket, ticket, EvenOdd, evenOdd, owner, addr1, addr2;
-    // const ipfsMasterCard = "https://ipfs.io/ipfs/QmYe4QdGyrxPg4pWB2cnSN2ydEt2DbgJwhynE5CkSZeLJV?filename=MasterCard.png";
     beforeEach(async () => {
         [owner, addr1, addr2] = await ethers.getSigners();
         Token = await ethers.getContractFactory("TokenCash");
@@ -29,23 +31,11 @@ describe("Testcase of EvenOdd: ", () => {
         });
     });
     describe("1 Function: transfer", () => {
-        // it("should return fail when transfer error", async () => {
-        //     await token.mint(owner.address, TWO_ETHERS);
-        //     const tx = await token.approve(evenOdd.address, MORE_ETHERS);
-        //     await tx.wait();
-        //     await evenOdd.transfer(THREE_ETHERS);
-        // });
         it("should show message: ... when not owner call transfer", async () => {
-            let logError = "";
             await token.mint(owner.address, TWO_ETHERS);
             const tx = await token.approve(evenOdd.address, MORE_ETHERS);
             await tx.wait();
-            try {
-                await evenOdd.connect(addr1).transfer(THREE_ETHERS);
-            } catch (e) {
-                logError = `${e.message}`;
-            }
-            expect(logError).to.match(/Ownable: caller is not the owner/)
+            await expect(evenOdd.connect(addr1).transfer(THREE_ETHERS)).to.be.revertedWith("Ownable: caller is not the owner")
         });
         it("should transfer success when owner call transfer", async () => {
             expect(await evenOdd.getDealerBalance()).to.equal(0);
@@ -61,30 +51,14 @@ describe("Testcase of EvenOdd: ", () => {
     })
     describe("2 Function: withdraw", () => {
         it("should return fail if amount withdraw equal to zero", async () => {
-            let logError = "";
-            try {
-                const tx = await evenOdd.withdraw(0);
-                await tx.wait();
-            } catch (e) {
-                logError = `${e}`;
-            }
-
-            expect(logError).to.match(/Amount must be not zero/);
+            await expect(evenOdd.withdraw(0)).to.be.revertedWith("Amount must be not zero")
         });
         it("shoulld return fail when amount exceeds balance", async () => {
-            let logError = "";
             await token.mint(owner.address, TWO_ETHERS);
             const tx = await token.approve(evenOdd.address, MORE_ETHERS);
             await tx.wait();
             await evenOdd.transfer(THREE_ETHERS);
-            try {
-                const txw = await evenOdd.withdraw(FOUR_ETHERS);
-                await txw.wait();
-            } catch (e) {
-                logError = `${e}`;
-            }
-
-            expect(logError).to.match(/Amount exceeds balance/);
+            await expect(evenOdd.withdraw(FOUR_ETHERS)).to.be.revertedWith("Amount exceeds balance")
         });
         it("should withdraw success when 0 < amount < onwer transfer", async () => {
             expect(await token.balanceOf(owner.address)).to.equal(MORE_ETHERS);
@@ -105,33 +79,22 @@ describe("Testcase of EvenOdd: ", () => {
     })
     describe("3 Function: bet", () => {
         it("should return fail when sender not have ticket", async () => {
-            let logError = "";
             await token.mint(owner.address, TWO_ETHERS);
             const tx = await token.approve(evenOdd.address, MORE_ETHERS);
             await tx.wait();
-            await evenOdd.transfer(MORE_ETHERS);
-            
+            await evenOdd.transfer(MORE_ETHERS);  
             //step 2: mint token 
             await token.mint(addr1.address, ONE_ETHER);
-            // await ticket.mint(addr1.address);
             //step 3: player bet 
             const txa = await token.connect(addr1).approve(evenOdd.address, MORE_ETHERS);
             await txa.wait();
-            try {
-                const beta = await evenOdd.connect(addr1).bet(true, ONE_ETHER);
-                await beta.wait();  
-            } catch (e) {
-                logError = `${e}`
-            }
-            //check
-            expect(logError).to.match(/You need to buy a ticket to play this game/);
+            await expect(evenOdd.connect(addr1).bet(true, ONE_ETHER)).to.be.revertedWith("You need to buy a ticket to play this game")
         });
         it("should return fail when sender have a ticket expired", async () => {
             await token.mint(owner.address, TWO_ETHERS);
             const tx = await token.approve(evenOdd.address, MORE_ETHERS);
             await tx.wait();
-            await evenOdd.transfer(MORE_ETHERS);
-            
+            await evenOdd.transfer(MORE_ETHERS);       
             //step 2: mint token and mint ticket for addr1
             await token.mint(addr1.address, ONE_ETHER);
             await ticket.mint(addr1.address);
@@ -142,65 +105,45 @@ describe("Testcase of EvenOdd: ", () => {
             //step 3: player bet 
             const txa = await token.connect(addr1).approve(evenOdd.address, MORE_ETHERS);
             await txa.wait();
-            try {
-                const beta = await evenOdd.connect(addr1).bet(true, ONE_ETHER);
-                await beta.wait();  
-            } catch (e) {
-                logError = `${e}`
-            }
             //check
-            expect(logError).to.match(/Your ticket is expired/);
+            await expect(evenOdd.connect(addr1).bet(true, ONE_ETHER)).to.be.revertedWith("Your ticket is expired");
         });
         it("should return fail when sender has ever bet before in same rollId", async () => {
             await token.mint(owner.address, TWO_ETHERS);
             const tx = await token.approve(evenOdd.address, MORE_ETHERS);
             await tx.wait();
-            await evenOdd.transfer(MORE_ETHERS);
-            
+            await evenOdd.transfer(MORE_ETHERS);     
             //step 2: mint token and mint ticket for addr1
             await token.mint(addr1.address, ONE_ETHER);
             await ticket.mint(addr1.address);
             //step 3: player bet 
             const txa = await token.connect(addr1).approve(evenOdd.address, MORE_ETHERS);
             await txa.wait();
-            try {
-                const beta = await evenOdd.connect(addr1).bet(true, ONE_ETHER);
-                await beta.wait();  
-                const betb = await evenOdd.connect(addr1).bet(true, ONE_ETHER);
-                await betb.wait();  
-            } catch (e) {
-                logError = `${e}`
-            }
+            // try {
+            const beta = await evenOdd.connect(addr1).bet(true, ONE_ETHER);
+            await beta.wait();  
             //check
-            expect(logError).to.match(/Already bet/);
+            await expect(evenOdd.connect(addr1).bet(true, ONE_ETHER)).to.be.revertedWith("Already bet");
         });
         it("should return fail when sender bet amount = 0", async () => {
             await token.mint(owner.address, TWO_ETHERS);
             const tx = await token.approve(evenOdd.address, MORE_ETHERS);
             await tx.wait();
             await evenOdd.transfer(MORE_ETHERS);
-            
             //step 2: mint token and mint ticket for addr1
             await token.mint(addr1.address, ONE_ETHER);
             await ticket.mint(addr1.address);
             //step 3: player bet 
             const txa = await token.connect(addr1).approve(evenOdd.address, MORE_ETHERS);
             await txa.wait();
-            try {
-                const beta = await evenOdd.connect(addr1).bet(true, 0);
-                await beta.wait();  
-            } catch (e) {
-                logError = `${e}`
-            }
             //check
-            expect(logError).to.match(/minimum amount needed to play the game/);
+            await expect(evenOdd.connect(addr1).bet(true, 0)).to.be.revertedWith("minimum amount needed to play the game");
         });
         it("should return fail when total bet amount exceeds dealer balance", async () => {
             await token.mint(owner.address, TWO_ETHERS);
             const tx = await token.approve(evenOdd.address, MORE_ETHERS);
             await tx.wait();
             await evenOdd.transfer(TWO_ETHERS);
-            
             //step 2: mint token and mint ticket for addr1
             await token.mint(addr1.address, ONE_ETHER);
             await ticket.mint(addr1.address);
@@ -211,26 +154,16 @@ describe("Testcase of EvenOdd: ", () => {
             await txa.wait();
             const txb = await token.connect(addr2).approve(evenOdd.address, MORE_ETHERS);
             await txb.wait();
-            try {
-                const beta = await evenOdd.connect(addr1).bet(true, ONE_ETHER);
-                await beta.wait(); 
-                const betb = await evenOdd.connect(addr2).bet(true, THREE_ETHERS);
-                await betb.wait(); 
-            } catch (e) {
-                logError = `${e}`
-            }
+            const beta = await evenOdd.connect(addr1).bet(true, ONE_ETHER);
+            await beta.wait(); 
             //check
-            expect(logError).to.match(/total bet amount exceeds dealer balance/);
+            await expect(evenOdd.connect(addr2).bet(true, THREE_ETHERS)).to.be.revertedWith("total bet amount exceeds dealer balance");
         });
-        // it("should return fail when tranfer cash from sender fail", async () => {
-
-        // });
         it("should return success when player transfer cash", async () => {
             await token.mint(owner.address, TWO_ETHERS);
             const tx = await token.approve(evenOdd.address, MORE_ETHERS);
             await tx.wait();
             await evenOdd.transfer(MORE_ETHERS);
-            
             //step 2: mint token and mint ticket for addr1
             await token.mint(addr1.address, ONE_ETHER);
             await ticket.mint(addr1.address);
@@ -252,12 +185,10 @@ describe("Testcase of EvenOdd: ", () => {
 })
     describe("4 Function: rollDice", () => {
         it("should show message: ... when not owner call transfer", async () => {
-            let logError = "";
             await token.mint(owner.address, TWO_ETHERS);
             const tx = await token.approve(evenOdd.address, MORE_ETHERS);
             await tx.wait();
-            await evenOdd.transfer(MORE_ETHERS);
-            
+            await evenOdd.transfer(MORE_ETHERS);      
             //step 2: mint token and mint ticket for addr1
             await token.mint(addr1.address, ONE_ETHER);
             await ticket.mint(addr1.address);
@@ -267,36 +198,23 @@ describe("Testcase of EvenOdd: ", () => {
             const beta = await evenOdd.connect(addr1).bet(true, ONE_ETHER);
             await beta.wait();
             //step 4: roll dice
-            try {
-                await evenOdd.connect(addr1).rollDice();
-            } catch (e) {
-                logError = `${e.message}`;
-            }
             //check
-            expect(logError).to.match(/Ownable: caller is not the owner/)
+            await expect(evenOdd.connect(addr1).rollDice()).to.be.revertedWith("Ownable: caller is not the owner");
         });
         it("should return fail when no one place bet", async () => {
-            let logError = "";
             await token.mint(owner.address, TWO_ETHERS);
             const tx = await token.approve(evenOdd.address, MORE_ETHERS);
             await tx.wait();
             await evenOdd.transfer(MORE_ETHERS);
-           
             //step 4: roll dice
-            try {
-                await evenOdd.rollDice();
-            } catch (e) {
-                logError = `${e.message}`;
-            }
             //check
-            expect(logError).to.match(/No one place bet/)
+            await expect(evenOdd.rollDice()).to.be.revertedWith("No one place bet")
         });
         it("should roll success when owner call", async () => {
             await token.mint(owner.address, TWO_ETHERS);
             const tx = await token.approve(evenOdd.address, MORE_ETHERS);
             await tx.wait();
-            await evenOdd.transfer(MORE_ETHERS);
-            
+            await evenOdd.transfer(MORE_ETHERS);          
             //step 2: mint token and mint ticket for addr1
             await token.mint(addr1.address, ONE_ETHER);
             await ticket.mint(addr1.address);
@@ -338,7 +256,7 @@ describe("Testcase of EvenOdd: ", () => {
             const beta = await evenOdd.connect(addr1).bet(true, ONE_ETHER);
             await beta.wait();
              //check
-             expect(await evenOdd.isAlreadyBet(addr1.address)).to.equal(true);
+            expect(await evenOdd.isAlreadyBet(addr1.address)).to.equal(true);
         });
     })
     describe("6 Function: getDealerBalance", () => {
@@ -347,7 +265,6 @@ describe("Testcase of EvenOdd: ", () => {
             const tx = await token.approve(evenOdd.address, MORE_ETHERS);
             await tx.wait();
             await evenOdd.transfer(MORE_ETHERS);
-
             expect(await evenOdd.getDealerBalance()).to.equal(MORE_ETHERS);
         });
     })
@@ -402,38 +319,7 @@ describe("Testcase of EvenOdd: ", () => {
             expect(info.betAmount).to.equal(ONE_ETHER);
         });
     })
-    // describe("9 Function: transferMoney", () => {
-    //     it("should transfer to players cash theirs win", async () => {
-    //         //step 1: mint token for owner and owner transfer
-    //         await token.mint(owner.address, TWO_ETHERS);
-    //         const tx = await token.approve(evenOdd.address, MORE_ETHERS);
-    //         await tx.wait();
-    //         await evenOdd.transfer(FOUR_ETHERS);
-    //         //step 2: mint token and mint ticket for addr1
-    //         await token.mint(addr1.address, ONE_ETHER);
-    //         await ticket.mint(addr1.address);
-
-    //         await token.mint(addr2.address, ONE_ETHER);
-    //         await ticket.mint(addr2.address);
-    //         //step 3: player bet 
-    //         const txa = await token.connect(addr1).approve(evenOdd.address, MORE_ETHERS);
-    //         await txa.wait();
-    //         const bettx = await evenOdd.connect(addr1).bet(true, ONE_ETHER);
-    //         await bettx.wait();
-
-    //         const txb = await token.connect(addr2).approve(evenOdd.address, MORE_ETHERS);
-    //         await txb.wait();
-    //         const bet = await evenOdd.connect(addr2).bet(false, ONE_ETHER);
-    //         await bet.wait();
-    //         //step 4: owner roll dice
-    //         const roll = await evenOdd.rollDice();
-    //         await roll.wait();
-
-    //         // ? how to get result
-    //         // expect()
-    //     });
-    // })
-    describe("10 Function: resetBoard", () => {
+    describe("9 Function: resetBoard", () => {
         it("should reset all initial data when start new roll", async () => {
             //step 1: mint token for owner and owner transfer
             await token.mint(owner.address, TWO_ETHERS);
@@ -451,21 +337,9 @@ describe("Testcase of EvenOdd: ", () => {
             //step 4: owner roll dice
             const roll = await evenOdd.rollDice();
             await roll.wait();
-
+            //check
             expect(await evenOdd.rollId()).to.equal(2);
             expect(await evenOdd.totalBetAmountPerRoll()).to.equal(0);
         });
     })
-    // describe("11 Function: generateRandomNumber", () => {
-    //     // it("should return a random number from 1 to 6", async () => {
-    //     //     const num1 = await evenOdd.generateRandomNumber(1);
-    //     //     const num2 = await evenOdd.generateRandomNumber(2);
-
-    //     //     expect(num1).to.be.greaterThan(0);
-    //     //     expect(num1).to.be.lessThan(6);
-
-    //     //     expect(num2).to.be.greaterThan(0);
-    //     //     expect(num2).to.be.lessThan(6);
-    //     // }); 
-    // })
 })
