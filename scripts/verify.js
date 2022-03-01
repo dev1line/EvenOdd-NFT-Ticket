@@ -10,8 +10,16 @@ async function main() {
 
   try {
     await hre.run("verify:verify", {
+      address: contract.Cash,
+      constructorArguments: ["CASHCOIN", "CASH"]
+    });
+    await hre.run("verify:verify", {
+      address: contract.Ticket,
+      constructorArguments: ["Mastercard VIP", "MTCASH"]
+    });
+    await hre.run("verify:verify", {
       address: contract.EvenOdd,
-      constructorArguments: [deployer.address]
+      constructorArguments: [deployer.address, contract.Ticket, contract.Cash]
     });
   } catch (e) {
     console.log(e.message);

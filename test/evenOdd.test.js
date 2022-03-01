@@ -43,9 +43,7 @@ describe("Testcase of EvenOdd: ", () => {
             await token.mint(owner.address, TWO_ETHERS);
             const tx = await token.approve(evenOdd.address, MORE_ETHERS);
             await tx.wait();
-            const tf = await evenOdd.transfer(THREE_ETHERS);
-            await tf.wait();
-
+            await expect(() => evenOdd.transfer(THREE_ETHERS)).to.changeTokenBalances(token, [owner, evenOdd], [`-${THREE_ETHERS}`, THREE_ETHERS]);
             expect(await evenOdd.getDealerBalance()).to.equal(THREE_ETHERS);
         });
     })
@@ -73,7 +71,6 @@ describe("Testcase of EvenOdd: ", () => {
             
             const txw = await evenOdd.connect(owner).withdraw(TWO_ETHERS);
             await txw.wait();
- 
             expect(await token.balanceOf(evenOdd.address)).to.equal(ONE_ETHER);
         });
     })
