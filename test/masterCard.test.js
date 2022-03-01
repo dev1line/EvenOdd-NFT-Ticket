@@ -8,7 +8,7 @@ describe("Testcase of NFT MasterCard: ", () => {
   const ipfsMasterCard = "https://ipfs.io/ipfs/QmYe4QdGyrxPg4pWB2cnSN2ydEt2DbgJwhynE5CkSZeLJV?filename=MasterCard.png";
   beforeEach(async () => {
     [owner, addr1, addr2] = await ethers.getSigners();
-    Ticket = await ethers.getContractFactory("MasterCard");
+    Ticket = await ethers.getContractFactory("EpsMasterCard");
     ticket = await Ticket.deploy("MasterCard", "MTCASH");
     await ticket.deployed();    
   });
@@ -24,7 +24,7 @@ describe("Testcase of NFT MasterCard: ", () => {
   });
   describe("Function: _baseURI", async () => {
     it("should return hollow string when just init ticket", async () => {
-      const baseURI = await ticket._baseUri();     
+      const baseURI = await ticket.eps_baseURI();     
       expect(baseURI).to.equal("");
     })
   });

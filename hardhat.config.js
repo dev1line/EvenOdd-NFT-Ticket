@@ -17,6 +17,13 @@ require("@nomiclabs/hardhat-solhint");
 // Verify and public source code on etherscan
 require('@nomiclabs/hardhat-etherscan');
 
+// Coverage testing
+require('solidity-coverage')
+
+// Call internal function
+require('hardhat-exposed');
+
+
 const config = {
   defaultNetwork: 'hardhat',
   networks: {
@@ -62,7 +69,8 @@ const config = {
     reporterOptions: {
       configFile: './mocha-report.json',
     },
-  }
+  },
+  exposed: { prefix: 'eps' }
 };
 
 module.exports = config;
